@@ -1,0 +1,13 @@
+delicious_username: "nogoodshits"
+delicious_password: "0poopie"
+server: "irc.barelylegalbovines.com"
+channels:
+    - "#test"
+username: "yummy"
+realname: "!help for information."
+nicknames:
+    - "yummy"
+    - "tasty"
+    - "delicious"
+loud: true
+welcome_text: "hello, there!"
