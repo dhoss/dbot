@@ -12,12 +12,13 @@ class DBot
         def initialize(config)
             raise "Cannot construct bot; invalid args" if config.nil?
             @config = config
-            @command = DBot::Commands
-
+            
             super(@config.yail_args)
         end
 
         def add_custom_handlers
+            @commands = DBot::Commands.new(@config, @irc)
+            @commands.init_commandsets
             @irc.prepend_handler :incoming_msg, method(:handle_incoming)
         end
 
@@ -35,7 +36,6 @@ class DBot
             command = tokens.shift
 
             @commands.handle_command(
-                @irc, 
                 command, 
                 out, 
                 tokens, 

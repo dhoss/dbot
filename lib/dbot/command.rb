@@ -1,45 +1,71 @@
 class DBot
-    module Commands
-        @commands = []
+    class Commands
 
-        def self.register_commandset(commandset)
-            @commandsets.push(commandset)
+        @@commandset_classes = []
+
+        def initialize(config, irc)
+            @commandsets = []
+            @config = config
+            @irc = irc
         end
 
-        def self.handle_command(irc, command_str, *args)
-            @commands.collect do |commandset|
-                if commandset.handles? command_str
-                    commandset.handle(irc, command_str, *args)
-                else
-                    nil
+        def self.register_commandset(commandset)
+            @@commandset_classes.push(commandset)
+        end
+
+        def handle_command(command_str, *args)
+            leader = Regexp.quote(@config.leader || '!')
+
+            command_found = false
+
+            if command_str =~ /^#{leader}/
+                command_str.sub!(/^#{leader}/, '')
+                command_found = true
+            end
+            
+            if command_found
+                @commandsets.collect do |commandset|
+                    if commandset.handles? command_str
+                        commandset.handle(@irc, command_str, *args)
+                    else
+                        nil
+                    end
                 end
-            end.reject { |x| x.nil? }
+            else
+                @commandsets.find_all { |c| c.handle_everything }.collect do |commandset|
+                    commandset.handle(@irc, :text, *args)
+                end
+            end.compact # XXX yes, i'm evil.
+        end
+
+        def init_commandsets
+            @@commandset_classes.each do |commandset|
+                @commandsets.push(commandset.new(@config))
+            end
         end
     end
     
     class CommandSet
-        def initialize(valid_commands, leader="!")
-            @valid_commands = valid_commands || []
-            @leader = leader
+
+        attr_reader :handle_everything
+
+        def initialize(config, valid_commands=[])
+            @config = config
+            @valid_commands = valid_commands
+            @handle_everything ||= false
         end
 
         def handles?(string)
-            @valid_commands.include?(strip_leader(string))
+            @valid_commands.has_key?(string)
+        end
+
+        def help(string)
+            @valid_commands[string][1]
         end
 
         def handle(irc, command_str, *args)
             raise "This command does not handle #{command_str}" unless self.handles?(command_str)
-            self.send(strip_leader(string).to_sym, *args)
-        end
-
-        protected
-
-        def strip_leader(string)
-            if string[0..(@leader.length-1)] == @leader
-                string[1..-1]
-            else
-                string.dup
-            end
+            self.send(command_str, irc, *args)
         end
     end
 end

@@ -10,4 +10,8 @@ nicknames:
     - "tasty"
     - "delicious"
 loud: true
-welcome_text: "hello, there!"
+daemonize: false
+welcome_text: "I R HERE"
+features:
+    - "dbot/features/delicious"
+    - "dbot/features/ping"
