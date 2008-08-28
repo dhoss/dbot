@@ -2,7 +2,7 @@ class DBot
     module Feature
         class Ping < DBot::CommandSet
 
-            def initialize(config)
+            def initialize(config, commands_obj)
                 super(config, { "ping" => [ :ping, "Ping the bot to see if it's still listening" ] })
             end
 

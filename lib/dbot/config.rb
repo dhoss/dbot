@@ -32,6 +32,10 @@ class DBot
             }
         end
 
+        def leader
+            self["leader"] || "!"
+        end
+
         # read-only struct-like behavior.
         def method_missing(method, *args)
             self[method.to_s]

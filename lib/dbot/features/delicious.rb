@@ -113,7 +113,7 @@ class DBot
             #
             #++
 
-            def initialize(config)
+            def initialize(config, commands_obj)
                 @del = WWW::Delicious.new(config.delicious_username, config.delicious_password)
                 @account = config.delicious_username
                 @handle_everything = true
@@ -123,7 +123,7 @@ class DBot
             # we need a special 'handle' method since we have @handle_everything turned on.
             def handle(irc, command_str, out, tokens, event_args)
                 if @valid_commands[command_str]
-                    self.send(command_str, irc, out, tokens, event_args)
+                    @valid_commands[command_str][0].call(irc, out, tokens, event_args)
                 else
                     # handle urls
                     begin

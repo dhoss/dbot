@@ -15,3 +15,4 @@ welcome_text: "I R HERE"
 features:
     - "dbot/features/delicious"
     - "dbot/features/ping"
+    - "dbot/features/help"

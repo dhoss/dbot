@@ -13,8 +13,12 @@ class DBot
             @@commandset_classes.push(commandset)
         end
 
+        def commandsets
+            @commandsets.dup
+        end
+
         def handle_command(command_str, *args)
-            leader = Regexp.quote(@config.leader || '!')
+            leader = Regexp.quote(@config.leader)
 
             command_found = false
 
@@ -40,7 +44,7 @@ class DBot
 
         def init_commandsets
             @@commandset_classes.each do |commandset|
-                @commandsets.push(commandset.new(@config))
+                @commandsets.push(commandset.new(@config, self))
             end
         end
     end
@@ -59,13 +63,21 @@ class DBot
             @valid_commands.has_key?(string)
         end
 
+        def commandset_name
+            self.class.name.sub(/^DBot::Feature::/, '')
+        end
+
+        def commands
+            @valid_commands.keys
+        end
+
         def help(string)
             @valid_commands[string][1]
         end
 
         def handle(irc, command_str, *args)
             raise "This command does not handle #{command_str}" unless self.handles?(command_str)
-            self.send(command_str, irc, *args)
+            @valid_commands[command_str][0].call(irc, *args)
         end
     end
 end
