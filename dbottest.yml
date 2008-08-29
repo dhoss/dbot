@@ -13,6 +13,6 @@ loud: true
 daemonize: false
 welcome_text: "I R HERE"
 features:
-    - "dbot/features/delicious"
     - "dbot/features/ping"
+    - "dbot/features/delicious"
     - "dbot/features/help"

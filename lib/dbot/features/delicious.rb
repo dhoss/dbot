@@ -17,57 +17,60 @@ class DBot
             #
             #++
 
-            COMMANDS = {
-                "account" => [:account, "Display the account where the URLs are stored"],
-                "delete"  => [:delete, "Delete a URL"],
-                "tag"     => [:tag, "Tag a url (tags separated by spaces). Syntax: !tag <url> <tags>"],
-                "title"   => [:title, "Set the title of the url. Syntax: !title <url> <title>"],
-                "lasturl" => [:lasturl, "Show the last stored URL."],
-                "recent"  => [:recent, "Show the 5 most recent stored URLs. If given a tag, will constraint to it."],
-            }
-
-            def account(irc, out, tokens, event_args)
-                irc.msg(out, "Visit http://delicious.com/#{@account} to see links that have been stored.")
+            COMMANDS = DBot::CommandTable.new do |table|
+                table.add("account", "Display the account where the URLs are stored", :account)
+                table.add("delete", "Delete a URL", :delete)
+                table.add("tag", "Tag a url (tags separated by spaces). Syntax: !tag <url> <tags>", :tag)
+                table.add("title", "Set the title of the url. Syntax: !title <url> <title>", :title)
+                table.add("lasturl", "Show the last stored URL, optionally filtered by tag.", :lasturl)
+                table.add("recent", "Show the 5 most recent stored URLs, optionally filtered by tag.", :recent)
             end
 
-            def delete(irc, out, tokens, event_args)
-                if tokens.length < 1
-                    irc.msg(out, "usage: !delete <url>")
+            def account(event)
+                event.reply("Visit http://delicious.com/#{@account} to see links that have been stored.")
+            end
+
+            def delete(event)
+                if event.command_args.length < 1
+                    event.reply("usage: !delete <url>")
                 else
                     begin
-                        get_url(tokens[0]) do |post|
+                        get_url(event.command_args[0]) do |post|
                             begin
                                 @del.posts_delete(post.url)
-                                irc.msg(out, "done, #{event_args[:nick]}")
+                                event.reply("done, #{event.from}.")
                             rescue URI::InvalidURIError
                             end
                         end
                     rescue StandardError => e
-                        irc.msg(out, e.message)
+                        event.reply(e.message)
                     end
                 end
             rescue WWW::Delicious::Error
-                irc.msg(out, "error deleting #{tokens[0]}")
+                event.reply("error deleting #{event.command_args[0]}")
             end
 
-            def tag(irc, out, tokens, event_args)
+            def tag(event)
+                tokens = event.command_args
                 if tokens.length < 2
                     msg(out, "usage: !tag <url> <list of tags>")
                 else
-                    url = tokens.shift
-                    tags = tokens.collect { |part| part.sub(/,*$/, '') }
+                    url = tokens[0]
+                    tags = tokens[1..-1].collect { |part| part.sub(/,*$/, '') }
                     begin
                         get_url(url) do |post|
                             post.tags.push(*tags)
-                            write_post(irc, out, event_args[:nick], post, "tagging")
+                            write_post(event, post, "tagging")
                         end
                     rescue StandardError => e
-                        irc.msg(out, e.message)
+                        event.reply(e.message)
                     end
                 end
             end
 
-            def title(irc, out, tokens, event_args)
+            def title(event)
+                tokens = event.command_args
+
                 if tokens.length < 2
                     msg(out, "usage: !title <url> <title>")
                 else
@@ -77,31 +80,31 @@ class DBot
                     begin
                         get_url(url) do |post|
                             post.title = title
-                            write_post(irc, out, event_args[:nick], post, "retitling")
+                            write_post(event, post, "retitling")
                         end
                     rescue StandardError => e
-                        irc.msg(out, e.message)
+                        event.reply(e.message)
                     end
                 end
             end
             
-            def recent(irc, out, tokens, event_args)
-                tag = tokens[0]
+            def recent(event)
+                tag = event.command_args[0]
 
                 get_recent_urls(tag, 5) do |posts|
                     posts.each do |post|
-                        irc.msg(out, post.url.to_s)
+                        event.reply(post.url.to_s)
                     end
                 end
             rescue WWW::Delicious::Error
             end
 
-            def lasturl(irc, out, tokens, event_args)
-                tag = tokens[0]
+            def lasturl(event)
+                tag = event.command_args[0]
 
                 get_recent_urls(tag, 1) do |posts|
                     unless posts.empty?
-                        irc.msg(out, posts[0].url.to_s)
+                        event.reply(posts[0].url.to_s)
                     end
                 end
             rescue WWW::Delicious::Error
@@ -117,33 +120,36 @@ class DBot
                 @del = WWW::Delicious.new(config.delicious_username, config.delicious_password)
                 @account = config.delicious_username
                 @handle_everything = true
-                super(config, methodize_commands(COMMANDS))
+                @commands = COMMANDS.dup
+                @commands.bind(self)
+                super(config, @commands)
             end
 
             # we need a special 'handle' method since we have @handle_everything turned on.
-            def handle(irc, command_str, out, tokens, event_args)
-                if @valid_commands[command_str]
-                    @valid_commands[command_str][0].call(irc, out, tokens, event_args)
+            def handle(event)
+                if event.has_command? and @valid_commands[event.command]
+                    @valid_commands.call(event)
                 else
                     # handle urls
                     begin
-                        urls = URI.extract(event_args[:text], @config.delicious_schemes || %w(http))
+                        urls = URI.extract(event.text, event.config.delicious_schemes || %w(http))
                         unless urls.empty?
-                            store_urls(out, event_args[:nick], urls)
+                            store_urls(event, urls)
                         end
-                    rescue Exception
+                    rescue Exception => e
+                        event.reply(e.message)
                     end
                 end
             end
 
             protected
 
-            def store_urls(out, nick, urls)
+            def store_urls(event, urls)
                 urls.each do |url| 
                     begin
-                        @del.posts_add(:url => url, :title => url, :replace => true, :tags => [nick]) 
+                        @del.posts_add(:url => url, :title => url, :replace => true, :tags => [event.from]) 
                     rescue WWW::Delicious::Error => e
-                        msg(out, "error storing: #{urls.join(', ')}. sorry, bub.")
+                        event.reply("error storing: #{urls.join(', ')}. sorry, bub.")
                     end
                 end
             end
@@ -174,22 +180,13 @@ class DBot
                 raise "error handling url: #{url}"
             end
 
-            def write_post(irc, out, nick, post, action)
+            def write_post(event, post, action)
                 # XXX hack around a WWW::Delicious bug
                 @del.posts_delete(post.url)
                 @del.posts_add(post)
-                irc.msg(out, "done, #{nick}.") 
+                event.reply("done, #{event.from}.")
             rescue WWW::Delicious::Error
-                irc.msg(out, "error #{action} #{post.url}")
-            end
-
-            def methodize_commands(commands)
-                new_commands = { }
-                commands.each do |key, value|
-                    new_commands[key] = [method(value[0]), value[1]]
-                end
-
-                return new_commands
+                event.reply("error #{action} #{post.url}")
             end
         end
     end

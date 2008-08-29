@@ -3,11 +3,14 @@ class DBot
         class Ping < DBot::CommandSet
 
             def initialize(config, commands_obj)
-                super(config, { "ping" => [ :ping, "Ping the bot to see if it's still listening" ] })
+                table = DBot::CommandTable.new
+                table.add("ping", "Ping the bot to see if it's still listening", method(:ping))
+
+                super(config, table)
             end
 
-            def ping(irc, out, tokens, event_args)
-                irc.msg(out, "Johnny five is alive!")
+            def ping(command)
+                command.irc.msg(command.out, "Johnny five is alive!")
             end
         end
     end

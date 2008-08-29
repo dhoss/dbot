@@ -10,7 +10,9 @@ $:.unshift(File.dirname(File.expand_path(__FILE__)))
 
 require 'dbot/config'
 require 'dbot/command'
+require 'dbot/event'
 require 'dbot/basebot'
+
 
 class DBot
     def initialize(config_path)

@@ -25,27 +25,8 @@ class DBot
         private
 
         def handle_incoming(hostinfo, nick, channel, text)
-            out = case channel
-                  when @irc.me
-                      nick
-                  else
-                      channel 
-                  end
-
-            tokens = text.split(/\s+/)
-            command = tokens.shift
-
-            @commands.handle_command(
-                command, 
-                out, 
-                tokens, 
-                { 
-                    :hostinfo => hostinfo,
-                    :nick     => nick,
-                    :channel  => channel,
-                    :text     => text
-                }
-            )
+            event = DBot::Event::Command.new(@config, @irc, hostinfo, nick, channel, text)
+            @commands.handle_command(event)
         end
 
         def welcome(text, args)
