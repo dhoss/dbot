@@ -11,7 +11,7 @@ class DBot
         def initialize(*args)
             args.collect! { |x| x.dup }
             args.each { |x| x.freeze }
-            @config, @irc, @hostinfo, @from, @target, @text = args
+            @irc, @hostinfo, @from, @target, @text = args
 
             @return_path = case @target
                            when @irc.me
@@ -44,7 +44,7 @@ class DBot
             command_str = toks[0]
             command_found = false
 
-            leader = Regexp.quote(@config.leader)
+            leader = Regexp.quote(DBot::Config.leader)
 
             if command_str =~ /^#{leader}/
                 command_str.sub!(/^#{leader}/, '')

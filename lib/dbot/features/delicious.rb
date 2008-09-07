@@ -116,13 +116,13 @@ class DBot
             #
             #++
 
-            def initialize(config, commands_obj)
-                @del = WWW::Delicious.new(config.delicious_username, config.delicious_password)
-                @account = config.delicious_username
+            def initialize(commands_obj)
+                @del = WWW::Delicious.new(DBot::Config.delicious_username, DBot::Config.delicious_password)
+                @account = DBot::Config.delicious_username
                 @handle_everything = true
                 @commands = COMMANDS.dup
                 @commands.bind(self)
-                super(config, @commands)
+                super(@commands)
             end
 
             # we need a special 'handle' method since we have @handle_everything turned on.
@@ -132,7 +132,7 @@ class DBot
                 else
                     # handle urls
                     begin
-                        urls = URI.extract(event.text, event.config.delicious_schemes || %w(http))
+                        urls = URI.extract(event.text, DBot::Config.delicious_schemes || %w(http))
                         unless urls.empty?
                             store_urls(event, urls)
                         end

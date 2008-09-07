@@ -1,27 +1,24 @@
 require 'yaml'
-require 'delegate'
 
 class DBot
-    class Config < DelegateClass(Hash)
-        def initialize(filename)
-            @config = YAML.load_file(filename)
+    class Config
+        def self.load_file(filename)
+            @@config = YAML.load_file(filename)
 
-            if @config.nil? 
+            if @@config.nil? 
                 raise "Invalid config: couldn't load file #{filename}."
-            elsif !@config.kind_of?(Hash)
+            elsif !@@config.kind_of?(Hash)
                 raise "Invalid config: not a hash"
             end
-
-            super(@config)
         end
 
         # just an override to prefer #duping the result.
-        def [](x)
-            @config[x].dup rescue @config[x]
+        def self.[](x)
+            @@config[x].dup rescue @@config[x]
         end
 
         # produces the args needed by Net::YAIL's constructor.
-        def yail_args
+        def self.yail_args
             {
                 :irc_network => self["server"],
                 :channels => self["channels"],
@@ -32,12 +29,12 @@ class DBot
             }
         end
 
-        def leader
+        def self.leader
             self["leader"] || "!"
         end
 
         # read-only struct-like behavior.
-        def method_missing(method, *args)
+        def self.method_missing(method, *args)
             self[method.to_s]
         end
     end

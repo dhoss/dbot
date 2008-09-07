@@ -13,25 +13,29 @@ require 'dbot/command'
 require 'dbot/event'
 require 'dbot/basebot'
 
+$:.shift
 
 class DBot
     def initialize(config_path)
-        @config = DBot::Config.new(config_path)
+        DBot::Config.load_file(config_path)
         load_features
     end
 
     def load_features
-        features = @config.features || []
+        features = DBot::Config.features || []
 
+        # FIXME this should probably change to "."
+        $:.unshift(File.dirname(File.expand_path(__FILE__)))
         features.each do |feature|
             require feature
         end
+        $:.shift
     end
 
     def run
-        @bot = DBot::BaseBot.new(@config)
+        @bot = DBot::BaseBot.new
 
-        if @config.daemonize
+        if DBot::Config.daemonize
             fork do
                 $stdout.reopen('/dev/null')
                 $stderr.reopen('/dev/null')

@@ -5,9 +5,8 @@ class DBot
 
         @@commandset_classes = []
 
-        def initialize(config, irc)
+        def initialize(irc)
             @commandsets = []
-            @config = config
             @irc = irc
         end
 
@@ -31,7 +30,7 @@ class DBot
 
         def init_commandsets
             @@commandset_classes.each do |commandset|
-                @commandsets.push(commandset.new(@config, self))
+                @commandsets.push(commandset.new(self))
             end
         end
     end
@@ -40,8 +39,7 @@ class DBot
 
         attr_reader :handle_everything
 
-        def initialize(config, valid_commands=DBot::CommandTable.new)
-            @config = config
+        def initialize(valid_commands=DBot::CommandTable.new)
             @valid_commands = valid_commands
             @handle_everything ||= false
         end
