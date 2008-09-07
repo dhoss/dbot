@@ -9,7 +9,7 @@ require 'uri'
 
 class DBot
     module Feature
-        class Delicious < DBot::CommandSet
+        class Delicious < DBot::FeatureSet
 
             #--
             #
@@ -192,4 +192,4 @@ class DBot
     end
 end
 
-DBot::Commands.register_commandset(DBot::Feature::Delicious)
+DBot::Features.register_commandset(DBot::Feature::Delicious)

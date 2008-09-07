@@ -14,7 +14,7 @@ class DBot
         end
 
         def add_custom_handlers
-            @commands = DBot::Commands.new(@irc)
+            @commands = DBot::Features.new(@irc)
             @commands.init_commandsets
             @irc.prepend_handler :incoming_msg, method(:handle_incoming)
         end

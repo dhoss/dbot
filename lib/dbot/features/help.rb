@@ -1,6 +1,6 @@
 class DBot
     module Feature
-        class Help < DBot::CommandSet
+        class Help < DBot::FeatureSet
             def initialize(commands_obj)
                 @commands_obj = commands_obj
                 table = DBot::CommandTable.new
@@ -31,4 +31,4 @@ class DBot
     end
 end
 
-DBot::Commands.register_commandset(DBot::Feature::Help)
+DBot::Features.register_commandset(DBot::Feature::Help)

@@ -1,7 +1,7 @@
 require 'delegate'
 
 class DBot
-    class Commands
+    class Features
 
         @@commandset_classes = []
 
@@ -35,7 +35,7 @@ class DBot
         end
     end
     
-    class CommandSet
+    class FeatureSet
 
         attr_reader :handle_everything
 

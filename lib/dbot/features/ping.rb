@@ -1,6 +1,6 @@
 class DBot
     module Feature
-        class Ping < DBot::CommandSet
+        class Ping < DBot::FeatureSet
 
             def initialize(commands_obj)
                 table = DBot::CommandTable.new
@@ -16,4 +16,4 @@ class DBot
     end
 end
 
-DBot::Commands.register_commandset(DBot::Feature::Ping)
+DBot::Features.register_commandset(DBot::Feature::Ping)
