@@ -18,6 +18,9 @@ class DBot
             this_target[state] = value
         end
 
+        def self.delete_channel(channel)
+            @@state.delete(channel)
+        end
 
         def self.delete_nick(nick)
             @@state.each_key do |key|
@@ -42,13 +45,12 @@ class DBot
 
         # mostly a debugging tool - dump the channel states
         def self.channel_state(channel)
-            return @@state[channel] || []
+            return @@state[channel] || { }
         end
     end
 
     class BaseBot < IRCBot
         def initialize
-            @state = { }
             super(DBot::Config.yail_args)
         end
 
@@ -69,8 +71,11 @@ class DBot
         end
 
         def handle_incoming_kick(hostinfo, kicker, channel, nick, text)
-            p [channel, nick]
-            UserState.delete_nick_from_channel(channel, nick)
+            if nick == @irc.me
+                UserState.delete_channel(channel)
+            else
+                UserState.delete_nick_from_channel(channel, nick)
+            end
         end
 
         def handle_incoming_part(hostinfo, nick, _,  channel)
@@ -84,8 +89,6 @@ class DBot
             # FIXME for now, the event API can't handle this
             # just try to keep track of what users have what.
             
-            @state[channel] ||= []
-
             targets = target.split(/\s/)
             op = true # true means "add", false means "remove"
 
