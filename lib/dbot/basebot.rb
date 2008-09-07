@@ -37,7 +37,7 @@ class DBot
             return nil unless (
                 @@state[channel] and
                 @@state[channel][nick] and
-                @@state[channel][nick].exists?(state)
+                @@state[channel][nick].has_key?(state)
             )
 
             return @@state[channel][nick][state]
