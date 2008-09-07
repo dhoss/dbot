@@ -1,5 +1,5 @@
-delicious_username: "nogoodshits"
-delicious_password: "0poopie"
+delicious_username: "username"
+delicious_password: "password"
 server: "irc.barelylegalbovines.com"
 channels:
     - "#test"
