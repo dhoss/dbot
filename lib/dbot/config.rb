@@ -25,6 +25,7 @@ class DBot
                 :username => self["username"],
                 :realname => self["realname"],
                 :nicknames => self["nicknames"],
+                :silent => self["silent"],
                 :loud => self["loud"],
             }
         end

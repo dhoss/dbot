@@ -55,13 +55,16 @@ class DBot
         end
 
         def add_custom_handlers
-            @commands = DBot::Features.new(@irc)
-            @commands.init_commandsets
-            @irc.prepend_handler :incoming_msg, method(:handle_incoming)
+            @features = DBot::Features.new(@irc)
+            @features.init_eventsets
+            @features.init_commandsets
+            @irc.prepend_handler :incoming_msg,  method(:handle_incoming_msg)
             @irc.prepend_handler :incoming_mode, method(:handle_incoming_mode)
             @irc.prepend_handler :incoming_part, method(:handle_incoming_part)
             @irc.prepend_handler :incoming_kick, method(:handle_incoming_kick)
             @irc.prepend_handler :incoming_quit, method(:handle_incoming_quit)
+            @irc.prepend_handler :incoming_ctcp, method(:handle_incoming_ctcp)
+            @irc.prepend_handler :incoming_any,  method(:handle_incoming)
         end
 
         private
@@ -110,18 +113,34 @@ class DBot
             end
         end
 
-        def handle_incoming(hostinfo, nick, channel, text)
+        def handle_incoming_msg(hostinfo, nick, channel, text)
             event = DBot::Event::Command.new(@irc, hostinfo, nick, channel, text)
-            @commands.handle_command(event)
+            @features.handle_command(event)
+        end
+
+        def handle_incoming_ctcp(hostinfo, nick, target, name)
+            if name == "VERSION"
+                @irc.ctcpreply(nick, "irssi v0.8.12 - running on Linux x86_64")
+            end
+        end
+
+        def handle_incoming(line)
+            @features.handle_event(DBot::Event::Raw.new(@irc, line))
+            return true
         end
 
         def welcome(text, args)
             welcome_text = DBot::Config.welcome_text
+            
+            if DBot::Config.nickserv_password
+                @irc.msg("NickServ", "identify #{DBot::Config.nickserv_password}")
+            end
 
             @channels.each do |channel|
                 @irc.join(channel)
                 msg(channel, welcome_text) if welcome_text
             end
+
         end
     end
 end

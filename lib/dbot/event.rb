@@ -32,6 +32,17 @@ class DBot
         alias out return_path
     end
 
+    class Event::Raw 
+        attr_reader :text
+        attr_reader :irc
+        
+        def initialize(irc, text)
+            @irc  = irc
+            @text = text
+            @text.freeze
+        end
+    end
+
     class Event::Command < Event
         attr_reader :command_args
         attr_reader :command

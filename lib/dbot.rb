@@ -52,7 +52,6 @@ class DBot
 
     def bot_loop
         @bot.connect_socket
-        @bot.start_listening
         @bot.irc_loop
     end
 end

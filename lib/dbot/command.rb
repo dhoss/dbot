@@ -4,10 +4,16 @@ class DBot
     class Features
 
         @@commandset_classes = []
+        @@eventset_classes = []
 
         def initialize(irc)
             @commandsets = []
+            @eventsets = []
             @irc = irc
+        end
+
+        def self.register_eventset(eventset)
+            @@eventset_classes.push(eventset)
         end
 
         def self.register_commandset(commandset)
@@ -16,6 +22,12 @@ class DBot
 
         def commandsets
             @commandsets.dup
+        end
+
+        def handle_event(event)
+            @eventsets.collect do |eventset|
+                eventset.handle event
+            end
         end
 
         def handle_command(event) 
@@ -31,6 +43,12 @@ class DBot
         def init_commandsets
             @@commandset_classes.each do |commandset|
                 @commandsets.push(commandset.new(self))
+            end
+        end
+
+        def init_eventsets
+            @@eventset_classes.each do |eventset|
+                @eventsets.push(eventset.new(self))
             end
         end
     end
