@@ -53,7 +53,7 @@ class DBot
             def tag(event)
                 tokens = event.command_args
                 if tokens.length < 2
-                    msg(out, "usage: !tag <url> <list of tags>")
+                    event.reply("usage: !tag <url> <list of tags>")
                 else
                     url = tokens[0]
                     tags = tokens[1..-1].collect { |part| part.sub(/,*$/, '') }
@@ -72,7 +72,7 @@ class DBot
                 tokens = event.command_args
 
                 if tokens.length < 2
-                    msg(out, "usage: !title <url> <title>")
+                    event.reply("usage: !title <url> <title>")
                 else
                     url = tokens[0]
                     title = tokens[1..-1].join(" ")
