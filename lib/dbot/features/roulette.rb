@@ -50,14 +50,15 @@ class DBot
             end
 
             def rr(event)
-                if DBot::UserState.state?(event.out, event.irc.me, :op)
+                if DBot::UserState.state?(event.out, event.dbot.me, :op)
                     case @gun.pull!
                     when Gun::KICK
-                        event.irc.kick(event.from, event.out, "*BLAM*")
+                        event.irc.kick(event.out, event.from, "*BLAM*")
                     when Gun::PASS
                         event.reply("#{event.from}: click.")
                     end
                 else
+                    p "here"
                     event.reply("This command only works when I'm opped.")
                 end
             end

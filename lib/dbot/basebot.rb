@@ -81,75 +81,70 @@ class DBot
 
             IRCEvent.add_callback('privmsg', &method(:handle_incoming_msg))
             IRCEvent.add_callback('kick',    &method(:handle_incoming_kick))
-#             IRCEvent.add_callback('part',    &method(:handle_incoming_part))
-#             IRCEvent.add_callback('mode',    &method(:handle_incoming_mode))
-#             IRCEvent.add_callback('ctcp',    &method(:handle_incoming_ctcp))
-#             IRCEvent.add_callback('mode',    &method(:handle_incoming_mode))
-#             IRCEvent.add_callback('quit',    &method(:handle_incoming_quit))
-
-#             @irc.prepend_handler :incoming_msg,  method(:handle_incoming_msg)
-#             @irc.prepend_handler :incoming_mode, method(:handle_incoming_mode)
-#             @irc.prepend_handler :incoming_part, method(:handle_incoming_part)
-#             @irc.prepend_handler :incoming_kick, method(:handle_incoming_kick)
-#             @irc.prepend_handler :incoming_quit, method(:handle_incoming_quit)
-#             @irc.prepend_handler :incoming_ctcp, method(:handle_incoming_ctcp)
-#             @irc.prepend_handler :incoming_any,  method(:handle_incoming)
+            IRCEvent.add_callback('part',    &method(:handle_incoming_part))
+            IRCEvent.add_callback('mode',    &method(:handle_incoming_mode))
+            IRCEvent.add_callback('quit',    &method(:handle_incoming_quit))
         end
 
         private
 
-        def handle_incoming_quit(hostinfo, quitter, quit_text)
-            UserState.delete_nick(quitter)
+        def handle_incoming_quit(event)
+            UserState.delete_nick(event.from)
         end
 
-        def handle_incoming_kick(hostinfo, kicker, channel, nick, text)
-            if nick == @irc.me
-                UserState.delete_channel(channel)
+        def handle_incoming_kick(event)
+            if event.target == @me
+                UserState.delete_channel(event.channel)
             else
-                UserState.delete_nick_from_channel(channel, nick)
+                UserState.delete_nick_from_channel(event.channel, event.target)
             end
         end
 
-        def handle_incoming_part(hostinfo, nick, _,  channel)
-            UserState.delete_nick_from_channel(channel, nick)
+        def handle_incoming_part(event)
+            UserState.delete_nick_from_channel(event.channel, event.from)
         end
 
-        def handle_incoming_mode(hostinfo, setter, channel, modes, target)
+        def handle_incoming_mode(event)
 
-            return unless target
+            return unless event.target
 
             # FIXME for now, the event API can't handle this
             # just try to keep track of what users have what.
             
-            targets = target.split(/\s/)
+            targets = event.target.split(/\s/)
             op = true # true means "add", false means "remove"
 
-            modes.each_char do |c|
+            event.mode.each_char do |c|
                 case c
                 when "+"
                     op = true
                 when "-"
                     op = false
                 when "o"
-                    UserState.set_state(channel, targets.shift, :op, op)
+                    UserState.set_state(event.channel, targets.shift, :op, op)
                 when "h"
-                    UserState.set_state(channel, targets.shift, :halfop, op)
+                    UserState.set_state(event.channel, targets.shift, :halfop, op)
                 when "v"
-                    UserState.set_state(channel, targets.shift, :voice, op)
+                    UserState.set_state(event.channel, targets.shift, :voice, op)
                 when "b"
-                    UserState.set_state(channel, targets.shift, :banned, op)
+                    UserState.set_state(event.channel, targets.shift, :banned, op)
                 end
             end
         end
 
         def handle_incoming_msg(event)
+            if event.message[0] == 1
+                handle_incoming_ctcp(event)
+            end
+
             dbot_event = DBot::Event::Command.new(self, event.hostmask, event.from, event.channel, event.message)
             @features.handle_command(dbot_event)
         end
 
-        def handle_incoming_ctcp(hostinfo, nick, target, name)
-            if name == "VERSION"
-                @irc.ctcpreply(nick, "irssi v0.8.12 - running on Linux x86_64")
+        def handle_incoming_ctcp(event)
+            message = event.message[1..-2]
+            if message == "VERSION"
+                @irc.send_ctcpreply(event.from, "VERSION", "irssi v0.8.12 - running on Linux x86_64")
             end
         end
 
