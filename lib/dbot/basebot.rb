@@ -137,8 +137,8 @@ class DBot
         end
 
         def handle_incoming_msg(event)
-            event = DBot::Event::Command.new(self, event.hostmask, event.from, event.channel, event.message)
-            @features.handle_command(event)
+            dbot_event = DBot::Event::Command.new(self, event.hostmask, event.from, event.channel, event.message)
+            @features.handle_command(dbot_event)
         end
 
         def handle_incoming_ctcp(hostinfo, nick, target, name)

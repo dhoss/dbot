@@ -13,16 +13,16 @@ class DBot
                 nick = event.from
 
                 if event.command_args.empty?
-                    event.irc.irc.send_message(nick, "I am a dbot. I support these features:")
+                    event.irc.send_message(nick, "I am a dbot. I support these features:")
                     @commands_obj.commandsets.each do |commandset|
-                        event.irc.irc.send_message(nick, [commandset.commandset_name, commandset.commands.collect { |x| (DBot::Config.leader) + x }.join(", ")].join(": "))
+                        event.irc.send_message(nick, [commandset.commandset_name, commandset.commands.collect { |x| (DBot::Config.leader) + x }.join(", ")].join(": "))
                     end
-                    event.irc.irc.send_message(nick, "say, '#{DBot::Config.leader}help <command>' for more information on specific commands.")
+                    event.irc.send_message(nick, "say, '#{DBot::Config.leader}help <command>' for more information on specific commands.")
                 else
                     command = event.command_args[0].sub(/^#{Regexp.quote(DBot::Config.leader)}/, '')
                     @commands_obj.commandsets.each do |commandset|
                         if commandset.handles_command?(command)
-                            event.irc.irc.send_message(nick, [commandset.commandset_name, DBot::Config.leader + command, commandset.help(command)].join(": "))
+                            event.irc.send_message(nick, [commandset.commandset_name, DBot::Config.leader + command, commandset.help(command)].join(": "))
                         end
                     end
                 end

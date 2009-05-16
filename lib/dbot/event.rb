@@ -4,6 +4,7 @@ class DBot
         attr_reader :from
         attr_reader :target
         attr_reader :text
+        attr_reader :dbot
         attr_reader :irc
         attr_reader :config
         attr_reader :return_path
@@ -11,10 +12,11 @@ class DBot
         def initialize(*args)
             args.collect! { |x| x.dup }
             args.each { |x| x.freeze }
-            @irc, @hostinfo, @from, @target, @text = args
+            @dbot, @hostinfo, @from, @target, @text = args
 
+            @irc = @dbot.irc
             @return_path = case @target
-                           when @irc.me
+                           when @dbot.me
                                @from
                            else
                                @target
@@ -26,7 +28,7 @@ class DBot
         end
 
         def reply(string)
-            @irc.msg(@return_path, string)
+            @irc.send_message(@return_path, string)
         end
 
         alias out return_path
