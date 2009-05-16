@@ -1,11 +1,11 @@
 begin
     require 'rubygems'
-    gem 'net-yail'
+    gem 'Ruby-IRC'
 rescue LoadError
 end
 
-require 'net/yail'
-require 'net/yail/IRCBot'
+require 'IRC'
+require 'IRCEvent'
 
 class DBot
     class UserState 
@@ -49,22 +49,45 @@ class DBot
         end
     end
 
-    class BaseBot < IRCBot
+    class BaseBot 
+
+        attr_reader :irc
+        attr_reader :me
+        attr_reader :server
+        attr_reader :port
+        attr_reader :realname
+
         def initialize
-            super(DBot::Config.yail_args)
+            @me         = DBot::Config["nicknames"][0]
+            @server     = DBot::Config["server"]
+            @port       = DBot::Config["port"] || "6667"
+            @realname   = DBot::Config["realname"]
+            @irc        = IRC.new(@me, @server, @port, @realname)
+            
+            IRCEvent.add_callback('endofmotd') { |event| STDERR.puts "here"; DBot::Config["channels"].each { |channel| @irc.add_channel(channel) } }
+            add_custom_handlers
         end
 
         def add_custom_handlers
             @features = DBot::Features.new(@irc)
             @features.init_eventsets
             @features.init_commandsets
-            @irc.prepend_handler :incoming_msg,  method(:handle_incoming_msg)
-            @irc.prepend_handler :incoming_mode, method(:handle_incoming_mode)
-            @irc.prepend_handler :incoming_part, method(:handle_incoming_part)
-            @irc.prepend_handler :incoming_kick, method(:handle_incoming_kick)
-            @irc.prepend_handler :incoming_quit, method(:handle_incoming_quit)
-            @irc.prepend_handler :incoming_ctcp, method(:handle_incoming_ctcp)
-            @irc.prepend_handler :incoming_any,  method(:handle_incoming)
+
+            IRCEvent.add_callback('privmsg', &method(:handle_incoming_msg))
+#             IRCEvent.add_callback('kick',    &method(:handle_incoming_kick))
+#             IRCEvent.add_callback('part',    &method(:handle_incoming_part))
+#             IRCEvent.add_callback('mode',    &method(:handle_incoming_mode))
+#             IRCEvent.add_callback('ctcp',    &method(:handle_incoming_ctcp))
+#             IRCEvent.add_callback('mode',    &method(:handle_incoming_mode))
+#             IRCEvent.add_callback('quit',    &method(:handle_incoming_quit))
+
+#             @irc.prepend_handler :incoming_msg,  method(:handle_incoming_msg)
+#             @irc.prepend_handler :incoming_mode, method(:handle_incoming_mode)
+#             @irc.prepend_handler :incoming_part, method(:handle_incoming_part)
+#             @irc.prepend_handler :incoming_kick, method(:handle_incoming_kick)
+#             @irc.prepend_handler :incoming_quit, method(:handle_incoming_quit)
+#             @irc.prepend_handler :incoming_ctcp, method(:handle_incoming_ctcp)
+#             @irc.prepend_handler :incoming_any,  method(:handle_incoming)
         end
 
         private
@@ -113,8 +136,8 @@ class DBot
             end
         end
 
-        def handle_incoming_msg(hostinfo, nick, channel, text)
-            event = DBot::Event::Command.new(@irc, hostinfo, nick, channel, text)
+        def handle_incoming_msg(event)
+            event = DBot::Event::Command.new(self, event.hostmask, event.from, event.channel, event.message)
             @features.handle_command(event)
         end
 
@@ -127,20 +150,6 @@ class DBot
         def handle_incoming(line)
             @features.handle_event(DBot::Event::Raw.new(@irc, line))
             return true
-        end
-
-        def welcome(text, args)
-            welcome_text = DBot::Config.welcome_text
-            
-            if DBot::Config.nickserv_password
-                @irc.msg("NickServ", "identify #{DBot::Config.nickserv_password}")
-            end
-
-            @channels.each do |channel|
-                @irc.join(channel)
-                msg(channel, welcome_text) if welcome_text
-            end
-
         end
     end
 end

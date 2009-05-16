@@ -1,11 +1,3 @@
-begin
-    require 'rubygems'
-    gem 'net-yail'
-rescue LoadError => e
-end
-
-require 'net/yail'
-
 $:.unshift(File.dirname(File.expand_path(__FILE__)))
 
 require 'dbot/config'
@@ -33,7 +25,6 @@ class DBot
     end
 
     def run
-        @bot = DBot::BaseBot.new
 
         if DBot::Config.daemonize
             fork do
@@ -51,8 +42,7 @@ class DBot
     end
 
     def bot_loop
-        @bot.connect_socket
-        @bot.irc_loop
+        @bot = DBot::BaseBot.new
+        @bot.irc.connect
     end
 end
-
