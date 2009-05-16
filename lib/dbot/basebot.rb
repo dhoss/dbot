@@ -62,6 +62,7 @@ class DBot
             @server     = DBot::Config["server"]
             @port       = DBot::Config["port"] || "6667"
             @realname   = DBot::Config["realname"]
+            @channels   = DBot::Config["channels"]
             @irc        = IRC.new(@me, @server, @port, @realname)
             
             add_custom_handlers
@@ -72,9 +73,14 @@ class DBot
             @features.init_eventsets
             @features.init_commandsets
 
-            IRCEvent.add_callback('endofmotd') { |event| DBot::Config["channels"].each { |channel| @irc.add_channel(channel) } }
+            IRCEvent.add_callback('endofmotd') do |event| 
+                nickserv_identify
+                @channels.each { |channel| @irc.add_channel(channel) } 
+                welcome
+            end
+
             IRCEvent.add_callback('privmsg', &method(:handle_incoming_msg))
-#             IRCEvent.add_callback('kick',    &method(:handle_incoming_kick))
+            IRCEvent.add_callback('kick',    &method(:handle_incoming_kick))
 #             IRCEvent.add_callback('part',    &method(:handle_incoming_part))
 #             IRCEvent.add_callback('mode',    &method(:handle_incoming_mode))
 #             IRCEvent.add_callback('ctcp',    &method(:handle_incoming_ctcp))
@@ -150,6 +156,21 @@ class DBot
         def handle_incoming(line)
             @features.handle_event(DBot::Event::Raw.new(@irc, line))
             return true
+        end
+
+        def nickserv_identify
+            if DBot::Config.nickserv_password
+                @irc.send_message("NickServ", "identify #{DBot::Config.nickserv_password}")
+            end
+        end
+
+        def welcome
+            welcome_text = DBot::Config.welcome_text
+
+            @channels.each do |channel|
+                @irc.send_message(channel, welcome_text) if welcome_text
+            end
+
         end
     end
 end
