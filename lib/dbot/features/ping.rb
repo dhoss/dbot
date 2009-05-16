@@ -9,8 +9,8 @@ class DBot
                 super(table)
             end
 
-            def ping(command)
-                command.irc.msg(command.out, "Johnny five is alive!")
+            def ping(event)
+                event.reply("Johnny Five is alive!")
             end
         end
     end

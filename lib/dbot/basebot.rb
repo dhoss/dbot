@@ -64,7 +64,6 @@ class DBot
             @realname   = DBot::Config["realname"]
             @irc        = IRC.new(@me, @server, @port, @realname)
             
-            IRCEvent.add_callback('endofmotd') { |event| STDERR.puts "here"; DBot::Config["channels"].each { |channel| @irc.add_channel(channel) } }
             add_custom_handlers
         end
 
@@ -73,6 +72,7 @@ class DBot
             @features.init_eventsets
             @features.init_commandsets
 
+            IRCEvent.add_callback('endofmotd') { |event| DBot::Config["channels"].each { |channel| @irc.add_channel(channel) } }
             IRCEvent.add_callback('privmsg', &method(:handle_incoming_msg))
 #             IRCEvent.add_callback('kick',    &method(:handle_incoming_kick))
 #             IRCEvent.add_callback('part',    &method(:handle_incoming_part))
