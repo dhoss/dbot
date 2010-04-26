@@ -64,14 +64,18 @@ class DBot
             end
 
             def snack(event)
-                event.reply(@rt.fetch)
+                @rt.fetch.each do |line|
+                    event.reply(line)
+                end
             end
 
             def tastysnack(event)
                 if event.command_args.empty?
                     event.reply("Please provide me with a snack type. See !listsnacks")
                 else
-                    event.reply(@rt.filter(event.command_args))
+                    @rt.filter(event.command_args).each do |line|
+                        event.reply(line)
+                    end
                 end
             end
 
