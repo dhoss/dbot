@@ -49,16 +49,15 @@ end
 class DBot
     module Feature
         class Snack < DBot::FeatureSet
-            COMMANDS = 
-
             def initialize(commands_obj)
                 @commands_obj = commands_obj
 
                 @rt = RandomText.new
 
                 table = DBot::CommandTable.new do |table|
-                    table.add("snack", "Monkeys writing shakespeare?", :snack)
-                    #table.add("tastysnack", "Monkeys writing pirate shakespeare?", :tastysnack)
+                    table.add("snack", "Monkeys writing shakespeare?", method(:snack))
+                    table.add("tastysnack", "Like snack, but it's specific! !tastysnack <snack>.", method(:tastysnack))
+                    table.add("listsnacks", "List the types of snacks you can feed!", method(:listsnacks))
                 end
 
                 super(table)
@@ -66,6 +65,18 @@ class DBot
 
             def snack(event)
                 event.reply(@rt.fetch)
+            end
+
+            def tastysnack(event)
+                if event.command_args.empty?
+                    event.reply("Please provide me with a snack type. See !listsnacks")
+                else
+                    event.reply(@rt.filter(event.command_args))
+                end
+            end
+
+            def listsnacks(event)
+                event.reply("I have these snacks: "+@rt.filter_list.join(" "))
             end
         end
     end
